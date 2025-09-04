@@ -1,0 +1,65 @@
+{
+    "version": 4,
+    "configurePresets": [
+        {
+            "name": "base-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE":"Release",
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+            },
+            "binaryDir": "./build",
+            "hidden": true
+        },
+        {
+            "name": "base-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE":"Debug",
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+            },
+            "binaryDir": "./build",
+            "hidden": true
+        },
+        {
+            "name": "mingw-release",
+            "displayName": "MinGW-w64 makefiles",
+            "inherits": ["base-release"],
+            "generator": "MinGW Makefiles"
+        },
+        {
+            "name": "mingw-debug",
+            "displayName": "MinGW-w64 makefiles",
+            "inherits": ["base-debug"],
+            "generator": "MinGW Makefiles"
+        }, 
+        {
+            "name": "unix-release",
+            "displayName": "Unix Makefiles",
+            "inherits": ["base-release"],
+            "generator": "Unix Makefiles"
+        },
+        {
+            "name": "unix-debug",
+            "displayName": "Unix Makefiles",
+            "inherits": ["base-debug"],
+            "generator": "Unix Makefiles"
+        },
+        {
+            "name": "ninja-release",
+            "displayName": "Ninja",
+            "inherits": ["base-release"],
+            "generator": "Ninja"
+        },
+        {
+            "name": "ninja-debug",
+            "displayName": "Ninja",
+            "inherits": ["base-debug"],
+            "generator": "Ninja"
+        },
+        {
+            "name": "msvc2022",
+            "displayName": "Visual studio 17 2022",
+            "inherits": ["base-release"],
+            "generator": "Visual Studio 17 2022"
+        }
+    ]
+}
