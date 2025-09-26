@@ -8,7 +8,7 @@ macro(project_enable_clang_format)
         project_get_files_of_subdirectories(STORE_AS PROJECT_FILES)
     endif()
     
-    find_program(PROJECT_CLANG_FORMAT clang-format REQUIRED)
+    find_program(PROJECT_CLANG_FORMAT clang-format OPTIONAL)
 
     add_custom_target(format
         COMMAND ${PROJECT_CLANG_FORMAT} -i ${PROJECT_FILES}
@@ -23,7 +23,7 @@ macro(project_enable_clang_tidy)
         project_get_files_of_subdirectories(STORE_AS PROJECT_FILES)
     endif()
 
-    find_program(PROJECT_CLANG_TIDY clang-tidy REQUIRED)
+    find_program(PROJECT_CLANG_TIDY clang-tidy OPTIONAL)
 
     add_custom_target(check
         COMMAND ${PROJECT_CLANG_TIDY} -p ${CMAKE_BINARY_DIR} ${PROJECT_FILES}

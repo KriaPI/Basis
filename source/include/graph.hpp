@@ -1,35 +1,42 @@
 #pragma once
 #include <cstddef>
 #include <list>
-#include <vector>
 #include <map>
 
 // TODO: consider overloading [] and [] = to retrieve and set the attribute values, respectively. 
 // TODO: implement function stubs.
+// TODO: keep a hash table with all vertex attributes, If an attribute has not been set for a vertex, then
+// return a default attribute (or use a std::optional to mark that it has no attribute). Avoid Nulls. 
 
 namespace Basis {
-    using VertexIndice = std::size_t;
+    enum class GraphType {
+        directed,
+        undirected
+    };
 
-    template <typename attributes>
-    class Graph {
-        std::size_t vertexCount {0};
-        std::size_t edgeCount {0};
-        std::vector<std::list<std::size_t>> vertices;
-    
-    public:
+    using VertexIndice = std::size_t;
     struct Edge {
         VertexIndice from;
         VertexIndice to;
     };
 
-    /// @brief Add an edge from vertex1 to vertex2. The vertices are added if they do not already exist.
-    /// @param edge Edge to add.  
-    void addEdge(Edge edge) noexcept {
+    template <GraphType type, typename attributes>
+    class Graph {
+        std::size_t vertexCount {0};
+        std::size_t edgeCount {0};
+        std::map<VertexIndice, std::list<VertexIndice>> vertices;
+    
+    public:
+    Graph();
 
+    /// @brief Add an edge from one vertex to another if the edge does 
+    /// not already exist. The vertices are added if they do not already exist.
+    /// @param edge Edge to add.  
+    void addEdge(const Edge& edge) noexcept {
+        return;        
     }
 
-    /// @brief Remove the edge from vertex1 to vertex2 if it exists. This operation will also remove the 
-    /// vertices' attributes. 
+    /// @brief Remove the edge from the graph if it exists.  
     /// @param edge Edge to remove. 
     /// @return True if the edge existed and was removed, otherwise False. 
     bool removeEdge(Edge edge) noexcept {
