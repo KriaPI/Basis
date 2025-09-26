@@ -27,7 +27,6 @@ namespace Basis {
         std::map<VertexIndice, std::list<VertexIndice>> vertices;
     
     public:
-    Graph();
 
     /// @brief Add an edge from one vertex to another if the edge does 
     /// not already exist. The vertices are added if they do not already exist.
