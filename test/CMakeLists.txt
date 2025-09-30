@@ -1,18 +1,17 @@
 include(GoogleTest)
 
 # Define executable targets
-add_executable(GraphTests graphTest.cpp)
+add_executable(DirectedGraphTests directedGraph.cpp)
 
 # Link targets
-target_link_libraries(GraphTests PUBLIC
+target_link_libraries(DirectedGraphTests PUBLIC
     GTest::gtest GTest::gtest_main
     Basis
 )
 
-
-target_include_directories(GraphTests PUBLIC
+target_include_directories(DirectedGraphTests PUBLIC
     ${PROJECT_SOURCE_DIR}/source/include
 )
 
 # Define tests
-gtest_discover_tests(GraphTests)
+gtest_discover_tests(DirectedGraphTests)
