@@ -46,7 +46,9 @@ namespace Basis {
 
             if (doesEdgeExist(edge)) return;
 
-            if (doesVertexExist(from)) {
+            auto fromVertex {edges.find(edge.from)};
+
+            if (fromVertex != edges.end()) {
                 (*edges.find(edge.from)).second.emplace_back(to);
             } else {
                 edges.insert({from, {to}});
@@ -60,7 +62,13 @@ namespace Basis {
         /// @param edge Edge to remove. 
         /// @return True if the edge existed and was removed, otherwise False. 
         bool removeEdge(Edge edge) noexcept {
-            return false;
+            if (doesEdgeExist(edge)) {
+                (*edges.find(edge.from)).second.remove(edge.to);
+                edgeCount--;
+                return true;
+            } else {
+                return false;
+            }
         }
 
         /// @brief Retrieve the number of vertices in the graph.
