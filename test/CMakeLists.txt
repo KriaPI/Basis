@@ -2,6 +2,8 @@ include(GoogleTest)
 
 # Define executable targets
 add_executable(DirectedGraphTests directedGraph.cpp)
+add_executable(UndirectedGraphTests undirectedGraph.cpp)
+
 
 # Link targets
 target_link_libraries(DirectedGraphTests PUBLIC
