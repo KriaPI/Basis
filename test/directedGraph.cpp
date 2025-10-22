@@ -3,17 +3,18 @@
 
 using Edge = Basis::Edge;
 using type = Basis::GraphType;
+using GraphClass = Basis::Graph<type::directed, int>;
 
 class DirectedGraphTest: public testing::Test {
     protected:
-    Basis::Graph<type::directed, int> graph;
+    GraphClass graph;
 
     DirectedGraphTest(): graph() {}
 };
 
 class PopulatedDirectedGraphTest: public testing::Test {
     protected:
-    Basis::Graph<type::directed, int> graph {};
+    GraphClass graph {};
 
     PopulatedDirectedGraphTest() {
         graph.addEdge(Edge{.from = 0, .to = 1});
@@ -21,6 +22,10 @@ class PopulatedDirectedGraphTest: public testing::Test {
         graph.addEdge(Edge{.from = 2, .to = 0});
     }
 };
+
+TEST_F(DirectedGraphTest, isDirected) {
+    ASSERT_TRUE(graph.is_directed());
+}
 
 TEST_F(DirectedGraphTest, AddNonexistentEdge) {
     const auto toAdd {Edge{.from = 0, .to = 1}};

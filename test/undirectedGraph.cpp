@@ -3,19 +3,18 @@
 
 using Edge = Basis::Edge;
 using type = Basis::GraphType;
-
-// TODO: write tests for undirected graph 
+using GraphClass = Basis::Graph<type::undirected, int>;
 
 class UndirectedGraphTest: public testing::Test {
     protected:
-    Basis::Graph<type::undirected, int> graph;
+    GraphClass graph;
 
     UndirectedGraphTest(): graph() {}
 };
 
 class PopulatedUndirectedGraphTest: public testing::Test {
     protected:
-    Basis::Graph<type::directed, int> graph {};
+    Basis::Graph<type::undirected, int> graph {};
 
     PopulatedUndirectedGraphTest() {
         graph.addEdge(Edge{.from = 0, .to = 1});
@@ -23,6 +22,10 @@ class PopulatedUndirectedGraphTest: public testing::Test {
         graph.addEdge(Edge{.from = 2, .to = 0});
     }
 };
+
+TEST_F(UndirectedGraphTest, isDirected) {
+    ASSERT_FALSE(graph.is_directed());
+}
 
 TEST_F(UndirectedGraphTest, AddNonexistentEdge) {
     const auto toAdd {Edge{.from = 0, .to = 1}};
