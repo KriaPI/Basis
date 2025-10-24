@@ -1,8 +1,8 @@
 #pragma once
-#include <cstddef>
 #include <algorithm>
+#include <cstddef>
 #include <list>
-#include <map>
+#include <unordered_map>
 #include <unordered_set>
 
 // TODO: keep a hash table with all vertex attributes, If an attribute has not been set for a vertex, then
@@ -28,17 +28,16 @@ namespace Basis {
 
     template <typename Attributes>
     class GraphBase {
-        protected:
+        private:
         std::size_t vertexCount {0};
         std::size_t edgeCount {0};
         std::unordered_set<VertexIndice> vertices;
         std::unordered_map<VertexIndice, std::list<VertexIndice>> edges;
         
         public:
-
         void addVertex(VertexIndice vertex) {
             const auto didInsert {vertices.insert(vertex).second};
-            if (didInsert) ++vertexCount;
+            if (didInsert) {++vertexCount;}
         }
 
         /// @brief Add an edge from one vertex to another if the edge does 
@@ -48,14 +47,14 @@ namespace Basis {
             const auto from {edge.from};
             const auto to   {edge.to};
 
-            if (doesEdgeExist(edge)) return;
+            if (doesEdgeExist(edge)) {return;}
 
             auto fromVertex {edges.find(edge.from)};
 
             if (fromVertex != edges.end()) {
                 (*edges.find(edge.from)).second.emplace_back(to);
             } else {
-                edges.insert({from, {to}});
+                edges.insert({from, std::list{to}});
                 addVertex(from);
             }
             addVertex(to);
@@ -102,7 +101,7 @@ namespace Basis {
             if (adjacentVertices != edges.cend()) {
                 const auto& adjacencyList {(*adjacentVertices).second};
 
-                return std::find(adjacencyList.begin(), adjacencyList.end(), edge.to) != adjacencyList.end();
+                return std::ranges::find(adjacencyList, edge.to) != adjacencyList.end();
             } else {
                 return false;
             }
@@ -127,7 +126,7 @@ namespace Basis {
         /// @brief Retrieve the number of vertices in the graph.
         /// @return The number of vertices.
         [[nodiscard]] std::size_t getEdgeCount() const noexcept {
-            return GraphBase<Attributes>::edgeCount / 2;
+            return GraphBase<Attributes>::getEdgeCount() / 2;
         } 
 
         /// @brief Add an edge between two vertices if it does not already exist.

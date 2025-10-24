@@ -6,14 +6,13 @@ using type = Basis::GraphType;
 using GraphClass = Basis::Graph<type::directed, int>;
 
 class DirectedGraphTest: public testing::Test {
-    protected:
+    public:
     GraphClass graph;
-
     DirectedGraphTest(): graph() {}
 };
 
 class PopulatedDirectedGraphTest: public testing::Test {
-    protected:
+    public:
     GraphClass graph {};
 
     PopulatedDirectedGraphTest() {
