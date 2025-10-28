@@ -7,6 +7,8 @@
 
 // TODO: keep a hash table with all vertex attributes, If an attribute has not been set for a vertex, then
 // return a default attribute (or use a std::optional to mark that it has no attribute). Avoid Nulls. 
+// TODO: implement breadth-first search and depth-first search
+
 
 namespace Basis {
     using VertexIndice = std::size_t;
@@ -21,19 +23,25 @@ namespace Basis {
         VertexIndice to;
     };
 
+    template <typename Attribute>
+    struct EdgeEndWithAttribute {
+        VertexIndice to;
+        Attribute attribute;
+    };
+
     /// @brief Retrieve the reverse of `edge`. 
     Edge getEdgeReversal(const Edge& edge) {
         return Edge{.from = edge.to, .to = edge.from};
     }
 
-    template <typename Attributes>
+    template <typename VertexAttribute = void, typename EdgeAttribute = void>
     class GraphBase {
         private:
         std::size_t vertexCount {0};
         std::size_t edgeCount {0};
         std::unordered_set<VertexIndice> vertices;
         std::unordered_map<VertexIndice, std::list<VertexIndice>> edges;
-        
+    
         public:
         void addVertex(VertexIndice vertex) {
             const auto didInsert {vertices.insert(vertex).second};
@@ -64,7 +72,7 @@ namespace Basis {
         /// @brief Remove the edge from the graph if it exists.  
         /// @param edge Edge to remove. 
         /// @return True if the edge existed and was removed, otherwise False. 
-        bool removeEdge(Edge edge) noexcept {
+        bool removeEdge(const Edge& edge) noexcept {
             if (doesEdgeExist(edge)) {
                 (*edges.find(edge.from)).second.remove(edge.to);
                 edgeCount--;
@@ -96,7 +104,7 @@ namespace Basis {
         /// @brief Check if the `edge` exists in the graph. 
         /// @param edge The edge to check existance of.
         /// @return True if the edge does exist, otherwise False. 
-        [[nodiscard]] bool doesEdgeExist(Edge edge) const noexcept {
+        [[nodiscard]] bool doesEdgeExist(const Edge& edge) const noexcept {
             const auto adjacentVertices {edges.find(edge.from)};
             if (adjacentVertices != edges.cend()) {
                 const auto& adjacencyList {(*adjacentVertices).second};
@@ -141,7 +149,7 @@ namespace Basis {
         /// @brief Remove the edge from the graph if it exists.  
         /// @param edge Edge to remove. 
         /// @return True if the edge existed and was removed, otherwise False. 
-        bool removeEdge(Edge edge) noexcept {
+        bool removeEdge(const Edge& edge) noexcept {
             auto reverseEdge {getEdgeReversal(edge)};
             return GraphBase<Attributes>::removeEdge(edge) && GraphBase<Attributes>::removeEdge(reverseEdge);
         }
