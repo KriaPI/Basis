@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <stdexcept>
 #include "graph.hpp"
 
 using Edge = Basis::Edge;
@@ -133,4 +134,14 @@ TEST_F(PopulatedUndirectedGraphTest, RemoveNonexistentEdge) {
     ASSERT_FALSE(graph.doesEdgeExist(Edge{.from = 3, .to = 0}));
     ASSERT_FALSE(graph.removeEdge(Edge{.from = 0, .to = 3}));
     ASSERT_EQ(graph.getEdgeCount(), previousEdgeCount);
+}
+
+TEST_F(PopulatedUndirectedGraphTest, SetAndGetAttributeDefaultType) {
+    constexpr int coolValue {32};
+    graph.addEdge(Edge{0, 1});
+    graph.setVertexAttribute(0, coolValue);
+    graph.setVertexAttribute(0, coolValue * 2);
+    ASSERT_EQ(graph.getVertexAttribute(0), coolValue * 2);
+
+    ASSERT_THROW(static_cast<void>(graph.getVertexAttribute(1)), std::out_of_range);
 }

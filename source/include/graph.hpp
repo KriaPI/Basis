@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <type_traits>
+#include <utility>
 
 // TODO: keep a hash table with all vertex attributes, If an attribute has not been set for a vertex, then
 // return a default attribute (or use a std::optional to mark that it has no attribute). Avoid Nulls. 
@@ -37,16 +38,14 @@ namespace Basis {
         return Edge{.from = edge.to, .to = edge.from};
     }
 
-    template <typename VertexAttribute = void, typename EdgeAttribute = void>
+    template <typename VertexAttribute = int, typename EdgeAttribute = int>
     class GraphBase {
         private:
-        using vAttribute = std::conditional<std::is_void_v<VertexAttribute>, int, VertexAttribute>;
-        using eAttribute = std::conditional<std::is_void_v<EdgeAttribute>, int, EdgeAttribute>;
 
         std::size_t vertexCount {0};
         std::size_t edgeCount {0};
         std::unordered_set<VertexIndice> vertices;
-        std::unordered_map<VertexIndice, vAttribute> vertexAttributes;
+        std::unordered_map<VertexIndice, VertexAttribute> vertexAttributes;
         std::unordered_map<VertexIndice, std::list<VertexIndice>> edges;
     
         public:
@@ -122,13 +121,13 @@ namespace Basis {
             }
         }
 
-        [[nodiscard]] const VertexAttribute& getVertexAttribute(const VertexIndice vertex) {
+        [[nodiscard]] const auto& getVertexAttribute(const VertexIndice vertex) {
             return vertexAttributes.at(vertex);
         }
 
-        
-        [[nodiscard]] bool setVertexAttribute(const VertexIndice vertex, const vAttribute& value) {
-            return vertexAttributes.insert_or_assign(vertex, value);
+        template <typename T>
+        void setVertexAttribute(const VertexIndice vertex, T&& value) {
+            vertexAttributes.insert_or_assign(vertex, std::forward<T>(value));
         }
     };
 
