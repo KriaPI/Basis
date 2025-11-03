@@ -6,14 +6,14 @@ using type = Basis::GraphType;
 using GraphClass = Basis::Graph<type::undirected, int>;
 
 class UndirectedGraphTest: public testing::Test {
-    protected:
+    public:
     GraphClass graph;
 
     UndirectedGraphTest(): graph() {}
 };
 
 class PopulatedUndirectedGraphTest: public testing::Test {
-    protected:
+    public:
     Basis::Graph<type::undirected, int> graph {};
 
     PopulatedUndirectedGraphTest() {

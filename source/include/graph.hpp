@@ -4,9 +4,12 @@
 #include <list>
 #include <unordered_map>
 #include <unordered_set>
+#include <type_traits>
 
 // TODO: keep a hash table with all vertex attributes, If an attribute has not been set for a vertex, then
 // return a default attribute (or use a std::optional to mark that it has no attribute). Avoid Nulls. 
+// TODO: make edge and vertex attributes non-optional (for a simpler implementation).
+
 // TODO: implement breadth-first search and depth-first search
 
 
@@ -37,9 +40,13 @@ namespace Basis {
     template <typename VertexAttribute = void, typename EdgeAttribute = void>
     class GraphBase {
         private:
+        using vAttribute = std::conditional<std::is_void_v<VertexAttribute>, int, VertexAttribute>;
+        using eAttribute = std::conditional<std::is_void_v<EdgeAttribute>, int, EdgeAttribute>;
+
         std::size_t vertexCount {0};
         std::size_t edgeCount {0};
         std::unordered_set<VertexIndice> vertices;
+        std::unordered_map<VertexIndice, vAttribute> vertexAttributes;
         std::unordered_map<VertexIndice, std::list<VertexIndice>> edges;
     
         public:
@@ -114,18 +121,28 @@ namespace Basis {
                 return false;
             }
         }
+
+        [[nodiscard]] const VertexAttribute& getVertexAttribute(const VertexIndice vertex) {
+            return vertexAttributes.at(vertex);
+        }
+
+        
+        [[nodiscard]] bool setVertexAttribute(const VertexIndice vertex, const vAttribute& value) {
+            return vertexAttributes.insert_or_assign(vertex, value);
+        }
     };
 
-    template <GraphType TypeOfGraph, typename Attributes>
-    class Graph: public GraphBase<Attributes> {
+
+    template <GraphType TypeOfGraph, typename VertexAttributes = void, typename EdgeAttributes = void>
+    class Graph: public GraphBase<VertexAttributes, EdgeAttributes> {
         public:
         [[nodiscard]] bool is_directed() const noexcept {
             return true;
         }
     };
 
-    template <typename Attributes>
-    class Graph<GraphType::undirected, Attributes>: public GraphBase<Attributes> {
+    template <typename VertexAttributes>
+    class Graph<GraphType::undirected, VertexAttributes>: public GraphBase<VertexAttributes> {
         public:
         [[nodiscard]] bool is_directed() const noexcept {
             return false;
@@ -134,7 +151,7 @@ namespace Basis {
         /// @brief Retrieve the number of vertices in the graph.
         /// @return The number of vertices.
         [[nodiscard]] std::size_t getEdgeCount() const noexcept {
-            return GraphBase<Attributes>::getEdgeCount() / 2;
+            return GraphBase<VertexAttributes>::getEdgeCount() / 2;
         } 
 
         /// @brief Add an edge between two vertices if it does not already exist.
@@ -142,8 +159,8 @@ namespace Basis {
         /// @param edge Edge to add.  
         void addEdge(const Edge& edge) noexcept {
             auto reverseEdge {getEdgeReversal(edge)};
-            GraphBase<Attributes>::addEdge(edge);
-            GraphBase<Attributes>::addEdge(reverseEdge);
+            GraphBase<VertexAttributes>::addEdge(edge);
+            GraphBase<VertexAttributes>::addEdge(reverseEdge);
         }
 
         /// @brief Remove the edge from the graph if it exists.  
@@ -151,7 +168,7 @@ namespace Basis {
         /// @return True if the edge existed and was removed, otherwise False. 
         bool removeEdge(const Edge& edge) noexcept {
             auto reverseEdge {getEdgeReversal(edge)};
-            return GraphBase<Attributes>::removeEdge(edge) && GraphBase<Attributes>::removeEdge(reverseEdge);
+            return GraphBase<VertexAttributes>::removeEdge(edge) && GraphBase<VertexAttributes>::removeEdge(reverseEdge);
         }
     };
 }
