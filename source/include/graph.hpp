@@ -4,13 +4,9 @@
 #include <list>
 #include <unordered_map>
 #include <unordered_set>
-#include <type_traits>
 #include <utility>
 
-// TODO: keep a hash table with all vertex attributes, If an attribute has not been set for a vertex, then
-// return a default attribute (or use a std::optional to mark that it has no attribute). Avoid Nulls. 
-// TODO: make edge and vertex attributes non-optional (for a simpler implementation).
-
+// TODO: implement edge attributes
 // TODO: implement breadth-first search and depth-first search
 
 
@@ -121,7 +117,7 @@ namespace Basis {
             }
         }
 
-        [[nodiscard]] const auto& getVertexAttribute(const VertexIndice vertex) {
+        [[nodiscard]] const auto& getVertexAttribute(const VertexIndice vertex) const {
             return vertexAttributes.at(vertex);
         }
 
@@ -132,7 +128,7 @@ namespace Basis {
     };
 
 
-    template <GraphType TypeOfGraph, typename VertexAttributes = void, typename EdgeAttributes = void>
+    template <GraphType TypeOfGraph, typename VertexAttributes = int, typename EdgeAttributes = int>
     class Graph: public GraphBase<VertexAttributes, EdgeAttributes> {
         public:
         [[nodiscard]] bool is_directed() const noexcept {

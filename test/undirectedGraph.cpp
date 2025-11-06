@@ -6,6 +6,12 @@ using Edge = Basis::Edge;
 using type = Basis::GraphType;
 using GraphClass = Basis::Graph<type::undirected, int>;
 
+struct CustomVertexAttribute {
+    float weight;
+    std::string label;
+};
+
+
 class UndirectedGraphTest: public testing::Test {
     public:
     GraphClass graph;
@@ -136,12 +142,29 @@ TEST_F(PopulatedUndirectedGraphTest, RemoveNonexistentEdge) {
     ASSERT_EQ(graph.getEdgeCount(), previousEdgeCount);
 }
 
-TEST_F(PopulatedUndirectedGraphTest, SetAndGetAttributeDefaultType) {
+TEST(GraphAttributeTest, SetAndGetAttributeDefaultType) {
+    Basis::Graph<type::undirected, int> graph {};
     constexpr int coolValue {32};
+    
     graph.addEdge(Edge{0, 1});
     graph.setVertexAttribute(0, coolValue);
     graph.setVertexAttribute(0, coolValue * 2);
-    ASSERT_EQ(graph.getVertexAttribute(0), coolValue * 2);
 
+    ASSERT_EQ(graph.getVertexAttribute(0), coolValue * 2);
+    ASSERT_THROW(static_cast<void>(graph.getVertexAttribute(1)), std::out_of_range);
+}
+
+TEST(GraphAttributeTest, SetAndGetAttributeCustomType) {
+    Basis::Graph<Basis::GraphType::undirected, CustomVertexAttribute> graph;
+    const CustomVertexAttribute a1 {.weight = 1.0F, .label = "road"};
+    const CustomVertexAttribute expected {.weight = 0.83F, .label = "dog"};
+
+    graph.addEdge(Edge{0, 1});
+    graph.setVertexAttribute(0, a1);
+    graph.setVertexAttribute(0, expected);
+    auto result {graph.getVertexAttribute(0)};
+
+    ASSERT_EQ(result.weight, expected.weight);
+    ASSERT_EQ(result.label, expected.label);
     ASSERT_THROW(static_cast<void>(graph.getVertexAttribute(1)), std::out_of_range);
 }
