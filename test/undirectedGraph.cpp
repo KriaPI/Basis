@@ -6,7 +6,7 @@ using Edge = Basis::Edge;
 using type = Basis::GraphType;
 using GraphClass = Basis::Graph<type::undirected, int>;
 
-struct CustomVertexAttribute {
+struct CustomAttribute {
     float weight;
     std::string label;
 };
@@ -142,7 +142,7 @@ TEST_F(PopulatedUndirectedGraphTest, RemoveNonexistentEdge) {
     ASSERT_EQ(graph.getEdgeCount(), previousEdgeCount);
 }
 
-TEST(GraphAttributeTest, SetAndGetAttributeDefaultType) {
+TEST(GraphVertexAttributeTest, SetAndGetAttributeDefaultType) {
     Basis::Graph<type::undirected, int> graph {};
     constexpr int coolValue {32};
     
@@ -154,10 +154,10 @@ TEST(GraphAttributeTest, SetAndGetAttributeDefaultType) {
     ASSERT_THROW(static_cast<void>(graph.getVertexAttribute(1)), std::out_of_range);
 }
 
-TEST(GraphAttributeTest, SetAndGetAttributeCustomType) {
-    Basis::Graph<Basis::GraphType::undirected, CustomVertexAttribute> graph;
-    const CustomVertexAttribute a1 {.weight = 1.0F, .label = "road"};
-    const CustomVertexAttribute expected {.weight = 0.83F, .label = "dog"};
+TEST(GraphVertexAttributeTest, SetAndGetAttributeCustomType) {
+    Basis::Graph<Basis::GraphType::undirected, CustomAttribute> graph;
+    const CustomAttribute a1 {.weight = 1.0F, .label = "road"};
+    const CustomAttribute expected {.weight = 0.83F, .label = "dog"};
 
     graph.addEdge(Edge{0, 1});
     graph.setVertexAttribute(0, a1);
@@ -167,4 +167,56 @@ TEST(GraphAttributeTest, SetAndGetAttributeCustomType) {
     ASSERT_EQ(result.weight, expected.weight);
     ASSERT_EQ(result.label, expected.label);
     ASSERT_THROW(static_cast<void>(graph.getVertexAttribute(1)), std::out_of_range);
+}
+
+TEST(GraphEdgeAttributeTest, SetAndGetAttributeDefaultType) {
+    Basis::Graph<type::undirected, int> graph {};
+    constexpr int coolValue {32};
+    const Edge edge {0, 1};
+    const Edge reverse {Basis::getEdgeReversal(edge)};
+    const Edge nonExistent {.from=1, .to=2};
+
+    graph.addEdge(edge);
+    graph.setEdgeAttribute(edge, coolValue);
+    graph.setEdgeAttribute(edge, coolValue * 2);
+
+    ASSERT_EQ(graph.getEdgeAttribute(edge), coolValue * 2);
+    ASSERT_EQ(graph.getEdgeAttribute(reverse), coolValue * 2);
+    ASSERT_THROW(static_cast<void>(graph.getEdgeAttribute(nonExistent)), std::out_of_range);
+}
+
+
+TEST(GraphEdgeAttributeTest, SetAndGetAttributeCustomType) {
+    Basis::Graph<Basis::GraphType::undirected, int, CustomAttribute> graph;
+    const CustomAttribute a1 {.weight = 1.0F, .label = "road"};
+    const CustomAttribute expected {.weight = 0.83F, .label = "dog"};
+    const Edge edge {0, 1};
+    const Edge reverse {Basis::getEdgeReversal(edge)};
+    const Edge nonExistent {.from=1, .to=2};
+
+    graph.addEdge(edge);
+    graph.setEdgeAttribute(edge, a1);
+    graph.setEdgeAttribute(edge, expected);
+    auto result {graph.getEdgeAttribute(edge)};
+    auto resultReverse {graph.getEdgeAttribute(reverse)};
+
+    ASSERT_EQ(result.weight, expected.weight);
+    ASSERT_EQ(result.label, expected.label);
+    ASSERT_EQ(resultReverse.weight, expected.weight);
+    ASSERT_EQ(resultReverse.label, expected.label);
+    ASSERT_THROW(static_cast<void>(graph.getEdgeAttribute(nonExistent)), std::out_of_range);
+}
+// TODO: test overload of addEdge to add attribute.
+
+TEST(GraphEdgeAttributeTest, AddEdgeAndSetAttribute) {
+    Basis::Graph<Basis::GraphType::undirected, int, CustomAttribute> graph;
+    const CustomAttribute a1 {.weight = 1.0F, .label = "road"};
+    const Edge edge {0, 1};
+    const Edge reverse {Basis::getEdgeReversal(edge)};
+
+    graph.addEdge(edge, a1);
+    ASSERT_TRUE(graph.doesEdgeExist(edge));
+    ASSERT_TRUE(graph.doesEdgeExist(reverse));
+    ASSERT_EQ(graph.getEdgeAttribute(edge).label, graph.getEdgeAttribute(reverse).label);
+    ASSERT_EQ(graph.getEdgeAttribute(edge).label, a1.label);
 }
