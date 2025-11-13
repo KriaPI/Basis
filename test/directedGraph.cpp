@@ -132,3 +132,40 @@ TEST_F(PopulatedDirectedGraphTest, RemoveNonexistentEdge) {
     ASSERT_FALSE(graph.removeEdge(Edge{.from = 0, .to = 3}));
     ASSERT_EQ(graph.getEdgeCount(), previousEdgeCount);
 }
+
+TEST(GraphEdgeAttributeTest, AddAttributesToDirectedEdges) {
+    Basis::Graph<Basis::GraphType::directed, int, int> graph {};
+    const Edge edge {0, 1};
+    const Edge reverse {Basis::getEdgeReversal(edge)};
+    
+    graph.addEdge(edge);
+    graph.addEdge(reverse);
+    graph.setEdgeAttribute(edge, 3);
+    graph.setEdgeAttribute(edge, 4);
+    graph.setEdgeAttribute(reverse, 2);
+    ASSERT_EQ(graph.getEdgeAttribute(edge), 4);
+    ASSERT_EQ(graph.getEdgeAttribute(reverse), 2);
+    graph.removeEdge(reverse);
+    ASSERT_THROW(static_cast<void>(graph.getEdgeAttribute(reverse)), std::out_of_range);
+}
+
+TEST(GraphEdgeAttributeTest, addDirectedEdgeWithAttribute) {
+    Basis::Graph<Basis::GraphType::directed, int, int> graph;
+    const Edge edge {0, 1};
+    const Edge reverse {Basis::getEdgeReversal(edge)};
+
+    graph.addEdge(edge, 40);
+    ASSERT_TRUE(graph.doesEdgeExist(edge));
+    ASSERT_FALSE(graph.doesEdgeExist(reverse));
+    ASSERT_EQ(graph.getEdgeAttribute(edge), 40);
+    ASSERT_THROW(static_cast<void>(graph.getEdgeAttribute(reverse)), std::out_of_range);
+}
+
+TEST(GraphEdgeAttributeTest, addDirectedEdgeWithoutAttribute) {
+    Basis::Graph<Basis::GraphType::directed, int, int> graph;
+    const Edge edge {0, 1};
+
+    graph.addEdge(edge);
+    ASSERT_TRUE(graph.doesEdgeExist(edge));
+    ASSERT_EQ(graph.getEdgeAttribute(edge), 0);
+}

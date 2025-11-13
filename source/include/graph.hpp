@@ -4,9 +4,12 @@
 #include <list>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
+#include <format>
 
-// TODO: keep a hash table with all vertex attributes, If an attribute has not been set for a vertex, then
-// return a default attribute (or use a std::optional to mark that it has no attribute). Avoid Nulls. 
+// TODO: add static asserts or something to constrain certain argument inputs (compile time checks only). 
+// TODO: implement breadth-first search and depth-first search
+// TODO: think about if custom iterators are a good idea to implement
 
 namespace Basis {
     using VertexIndice = std::size_t;
@@ -21,20 +24,30 @@ namespace Basis {
         VertexIndice to;
     };
 
-    /// @brief Retrieve the reverse of `edge`. 
+    template <typename Attribute>
+    struct EdgeEndWithAttribute {
+        VertexIndice to;
+        Attribute attribute;
+    };
+
     Edge getEdgeReversal(const Edge& edge) {
         return Edge{.from = edge.to, .to = edge.from};
     }
 
-    template <typename Attributes>
+    template <typename VertexAttribute = int, typename EdgeAttribute = char>
     class GraphBase {
         private:
+        using EdgeEnd = EdgeEndWithAttribute<EdgeAttribute>;
+
         std::size_t vertexCount {0};
         std::size_t edgeCount {0};
         std::unordered_set<VertexIndice> vertices;
-        std::unordered_map<VertexIndice, std::list<VertexIndice>> edges;
-        
+        std::unordered_map<VertexIndice, VertexAttribute> vertexAttributes;
+        std::unordered_map<VertexIndice, std::list<EdgeEnd>> edges;
+    
         public:
+        /// @brief Add a vertex to a the graph.
+        /// @param vertex The vertex to add. 
         void addVertex(VertexIndice vertex) {
             const auto didInsert {vertices.insert(vertex).second};
             if (didInsert) {++vertexCount;}
@@ -44,29 +57,39 @@ namespace Basis {
         /// not already exist. The vertices are added if they do not already exist.
         /// @param edge Edge to add.  
         void addEdge(const Edge& edge) noexcept {
-            const auto from {edge.from};
-            const auto to   {edge.to};
-
             if (doesEdgeExist(edge)) {return;}
 
+            const auto from {edge.from};
+            const auto to   {edge.to};
             auto fromVertex {edges.find(edge.from)};
 
             if (fromVertex != edges.end()) {
-                (*edges.find(edge.from)).second.emplace_back(to);
+                (*edges.find(edge.from)).second.emplace_back(EdgeEnd {.to = to, .attribute = {}});
             } else {
-                edges.insert({from, std::list{to}});
+                edges.insert({from, std::list{EdgeEnd {.to = to, .attribute = {}}} });
                 addVertex(from);
             }
             addVertex(to);
             ++edgeCount;
         }
 
+        /// @brief Add an edge from one vertex to another if the edge does 
+        /// not already exist. The vertices are added if they do not already exist.
+        /// @param edge Edge to add. 
+        /// @param attributeValue value to set for the attribute of `edge`.
+        template <typename T> 
+        void addEdge(const Edge& edge, T&& attributeValue) noexcept {
+            addEdge(edge);
+            setEdgeAttribute(edge, std::forward<T>(attributeValue));
+        }
+
         /// @brief Remove the edge from the graph if it exists.  
         /// @param edge Edge to remove. 
         /// @return True if the edge existed and was removed, otherwise False. 
-        bool removeEdge(Edge edge) noexcept {
+        bool removeEdge(const Edge& edge) noexcept {
             if (doesEdgeExist(edge)) {
-                (*edges.find(edge.from)).second.remove(edge.to);
+                std::list<EdgeEnd>& adjacencyList {(*edges.find(edge.from)).second};
+                adjacencyList.remove_if([&edge] (EdgeEnd& edgeEnd) {return edgeEnd.to == edge.to;});
                 edgeCount--;
                 return true;
             } else {
@@ -96,28 +119,89 @@ namespace Basis {
         /// @brief Check if the `edge` exists in the graph. 
         /// @param edge The edge to check existance of.
         /// @return True if the edge does exist, otherwise False. 
-        [[nodiscard]] bool doesEdgeExist(Edge edge) const noexcept {
+        [[nodiscard]] bool doesEdgeExist(const Edge& edge) const noexcept {
             const auto adjacentVertices {edges.find(edge.from)};
             if (adjacentVertices != edges.cend()) {
                 const auto& adjacencyList {(*adjacentVertices).second};
 
-                return std::ranges::find(adjacencyList, edge.to) != adjacencyList.end();
+                return std::ranges::find(adjacencyList, edge.to, [] (const EdgeEnd& edgeEnd) {return edgeEnd.to;}) != adjacencyList.end();
             } else {
                 return false;
             }
         }
+
+        /// @brief Set or update an attribute value of a vertex.
+        /// @param vertex Vertex whose attribute should be set or updated.
+        /// @param value Value to set or update to. 
+        template <typename T>
+        void setVertexAttribute(const VertexIndice vertex, T&& value) {
+            vertexAttributes.insert_or_assign(vertex, std::forward<T>(value));
+        }
+
+        /// @brief Retrieve the attribute value of a vertex. 
+        /// @param vertex Index of vertex to retrieve attribute value of. 
+        /// @return The attribute value of a `vertex`.
+        /// @throws `std::out_of_range` if no attribute value has not been set for `vertex` or if `vertex` does not exist. 
+        [[nodiscard]] const auto& getVertexAttribute(const VertexIndice vertex) const {
+            return vertexAttributes.at(vertex);
+        }
+
+        /// @brief Set or update the attribute value of an edge. 
+        /// @param edge The edge whose attribute value should be set or updated.
+        /// @param value Value to set or update to.
+        /// @note Edge attribute values are already default-initialized.
+        /// @throws `std::out_of_range` if `edge` does not exist in the graph. 
+        template <typename T>
+        void setEdgeAttribute(const Edge& edge, T&& value) {
+            if (!doesEdgeExist(edge)) {
+                throw std::out_of_range(std::format("Edge ({}, {}) does not exist.", edge.from, edge.to));
+            }
+            
+            const auto adjacentVertices {edges.find(edge.from)};
+            auto& adjacencyList {(*adjacentVertices).second};
+            const auto edgeEnd {std::ranges::find(adjacencyList, edge.to, [] (EdgeEnd& edgeEnd) {return edgeEnd.to;})};
+            edgeEnd->attribute = std::forward<T>(value);
+        }
+
+        /// @brief Retrieve the attribute value of an edge. 
+        /// @param edge Edge whose value should be retrieved.
+        /// @return The attribute value of `edge`.
+        /// @throws `std::out_of_range` if `edge` does not exist in the graph. 
+        [[nodiscard]] const auto& getEdgeAttribute(const Edge& edge) const {
+            if (!doesEdgeExist(edge)) {
+                throw std::out_of_range(std::format("Edge ({}, {}) does not exist.", edge.from, edge.to));
+            }
+
+            const auto adjacentVertices {edges.find(edge.from)};
+            const auto& adjacencyList {(*adjacentVertices).second};
+            const auto& edgeEnd {std::ranges::find(adjacencyList, edge.to, [] (const EdgeEnd& edgeEnd) {return edgeEnd.to;})};
+            return edgeEnd->attribute;
+        }
     };
 
-    template <GraphType TypeOfGraph, typename Attributes>
-    class Graph: public GraphBase<Attributes> {
+    /// @brief A type generic graph class with edge and vertex attributes. 
+    /// @tparam TypeOfGraph Specify whether the graph should behave as an undirected graph or a directed graph. 
+    /// @tparam VertexAttributes Attribute type for vertices.
+    /// @tparam EdgeAttributes Attribute type for edges. 
+    /// @note Edges always have an initialized edge attribute of 
+    /// the type `EdgeAttributes`. Consider using a pointer to the attribute type if the type is expensive (memory-wise).
+    template <GraphType TypeOfGraph, typename VertexAttributes = int, typename EdgeAttributes = char>
+    class Graph: public GraphBase<VertexAttributes, EdgeAttributes> {
         public:
         [[nodiscard]] bool is_directed() const noexcept {
             return true;
         }
     };
 
-    template <typename Attributes>
-    class Graph<GraphType::undirected, Attributes>: public GraphBase<Attributes> {
+
+    /// @brief A type generic graph class with edge and vertex attributes. 
+    /// @tparam TypeOfGraph Specify whether the graph should behave as an undirected graph or a directed graph. 
+    /// @tparam VertexAttributes Attribute type for vertices.
+    /// @tparam EdgeAttributes Attribute type for edges. 
+    /// @note Edges always have an initialized edge attribute of 
+    /// the type `EdgeAttributes`. Consider using a pointer to the attribute type if the type is expensive (memory-wise).
+    template <typename VertexAttributes, typename  EdgeAttributes>
+    class Graph<GraphType::undirected, VertexAttributes, EdgeAttributes>: public GraphBase<VertexAttributes, EdgeAttributes> {
         public:
         [[nodiscard]] bool is_directed() const noexcept {
             return false;
@@ -126,7 +210,7 @@ namespace Basis {
         /// @brief Retrieve the number of vertices in the graph.
         /// @return The number of vertices.
         [[nodiscard]] std::size_t getEdgeCount() const noexcept {
-            return GraphBase<Attributes>::getEdgeCount() / 2;
+            return GraphBase<>::getEdgeCount() / 2;
         } 
 
         /// @brief Add an edge between two vertices if it does not already exist.
@@ -134,16 +218,37 @@ namespace Basis {
         /// @param edge Edge to add.  
         void addEdge(const Edge& edge) noexcept {
             auto reverseEdge {getEdgeReversal(edge)};
-            GraphBase<Attributes>::addEdge(edge);
-            GraphBase<Attributes>::addEdge(reverseEdge);
+            GraphBase<VertexAttributes, EdgeAttributes>::addEdge(edge);
+            GraphBase<VertexAttributes, EdgeAttributes>::addEdge(reverseEdge);
+        }
+
+        /// @brief Add an edge from one vertex to another if the edge does 
+        /// not already exist. The vertices are added if they do not already exist.
+        /// @param edge Edge to add. 
+        /// @param attributeValue value to set for the attribute of `edge`.
+        template <typename T> 
+        void addEdge(const Edge& edge, T&& attributeValue) noexcept {
+            GraphBase<VertexAttributes, EdgeAttributes>::addEdge(edge, attributeValue);
+            GraphBase<VertexAttributes, EdgeAttributes>::addEdge(getEdgeReversal(edge), std::forward<T>(attributeValue));
         }
 
         /// @brief Remove the edge from the graph if it exists.  
         /// @param edge Edge to remove. 
         /// @return True if the edge existed and was removed, otherwise False. 
-        bool removeEdge(Edge edge) noexcept {
+        bool removeEdge(const Edge& edge) noexcept {
             auto reverseEdge {getEdgeReversal(edge)};
-            return GraphBase<Attributes>::removeEdge(edge) && GraphBase<Attributes>::removeEdge(reverseEdge);
+            return GraphBase<>::removeEdge(edge) && GraphBase<>::removeEdge(reverseEdge);
+        }
+
+        /// @brief Set or update the attribute value of an edge. 
+        /// @param edge The edge whose attribute value should be set or updated.
+        /// @param value Value to set or update to.
+        /// @note Edge attribute values are already default-initialized.
+        /// @throws `std::out_of_range` if `edge` does not exist in the graph. 
+        template <typename T>
+        void setEdgeAttribute(const Edge& edge, T&& value) {
+            GraphBase<VertexAttributes, EdgeAttributes>::setEdgeAttribute(edge, std::forward<T>(value));
+            GraphBase<VertexAttributes, EdgeAttributes>::setEdgeAttribute(getEdgeReversal(edge), std::forward<T>(value));
         }
     };
 }
