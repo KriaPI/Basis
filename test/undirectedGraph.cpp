@@ -206,7 +206,6 @@ TEST(GraphEdgeAttributeTest, SetAndGetAttributeCustomType) {
     ASSERT_EQ(resultReverse.label, expected.label);
     ASSERT_THROW(static_cast<void>(graph.getEdgeAttribute(nonExistent)), std::out_of_range);
 }
-// TODO: test overload of addEdge to add attribute.
 
 TEST(GraphEdgeAttributeTest, AddEdgeAndSetAttribute) {
     Basis::Graph<Basis::GraphType::undirected, int, CustomAttribute> graph;
