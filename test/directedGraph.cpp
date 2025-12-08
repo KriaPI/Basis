@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "graph.hpp"
+#include <iterator>
 
 using Edge = Basis::Edge;
 using type = Basis::GraphType;
@@ -168,4 +169,107 @@ TEST(GraphEdgeAttributeTest, addDirectedEdgeWithoutAttribute) {
     graph.addEdge(edge);
     ASSERT_TRUE(graph.doesEdgeExist(edge));
     ASSERT_EQ(graph.getEdgeAttribute(edge), 0);
+}
+
+TEST(GraphTraversalTest, getDirectedBFSOrder1) {
+    Basis::Graph<Basis::GraphType::directed, int, int> graph;
+    std::array edges {
+        Edge{0, 1},
+        Edge{1, 2},
+        Edge{1, 3},
+        Edge{1, 4},
+        Edge{3, 4},
+        Edge{4, 5}
+    };
+
+    for (auto& edge: edges) {
+        graph.addEdge(edge);
+    }
+
+    std::list expected {0, 1, 2, 3, 4, 5};
+    auto result {graph.getBreadthFirstOrder(0)};
+    auto expectedElement {std::begin(expected)}; 
+    auto resultElement {std::begin(result)};
+
+    EXPECT_EQ(std::size(expected), std::size(result));
+    for (;resultElement != std::end(result) && expectedElement != std::end(expected); ++expectedElement, ++resultElement) {
+        EXPECT_EQ(*expectedElement, *resultElement);
+    }
+}
+
+TEST(GraphTraversalTest, getDirectedBFSOrder2) {
+    Basis::Graph<Basis::GraphType::directed, int, int> graph;
+    std::array edges {
+        Edge{0, 1},
+        Edge{1, 2},
+        Edge{2, 3},
+        Edge{3, 4},
+        Edge{4, 0}
+    };
+
+    for (auto& edge: edges) {
+        graph.addEdge(edge);
+    }
+
+    std::list expected {0, 1, 2, 3, 4};
+    auto result {graph.getBreadthFirstOrder(0)};
+    auto expectedElement {std::begin(expected)}; 
+    auto resultElement {std::begin(result)};
+
+    EXPECT_EQ(std::size(expected), std::size(result));
+    for (;resultElement != std::end(result) && expectedElement != std::end(expected); ++expectedElement, ++resultElement) {
+        EXPECT_EQ(*expectedElement, *resultElement);
+    }
+}
+
+TEST(GraphTraversalTest, getDirectedDFSOrder1) {
+    Basis::Graph<Basis::GraphType::directed, int, int> graph;
+    std::array edges {
+        Edge{0, 1},
+        Edge{1, 2},
+        Edge{1, 3},
+        Edge{1, 4},
+        Edge{2, 4},
+        Edge{3, 4},
+        Edge{4, 5}
+    };
+
+    for (auto& edge: edges) {
+        graph.addEdge(edge);
+    }
+
+    std::list expected {0, 1, 4, 5, 3, 2};
+    auto result {graph.getDepthFirstOrder(0)};
+    auto expectedElement {std::begin(expected)}; 
+    auto resultElement {std::begin(result)};
+
+    EXPECT_EQ(std::size(expected), std::size(result));
+    for (;resultElement != std::end(result) && expectedElement != std::end(expected); ++expectedElement, ++resultElement) {
+        EXPECT_EQ(*expectedElement, *resultElement);
+    }
+}
+
+TEST(GraphTraversalTest, getDirectedDFSOrder2) {
+    Basis::Graph<Basis::GraphType::directed, int, int> graph;
+    std::array edges {
+        Edge{0, 40},
+        Edge{40, 50},
+        Edge{0, 10},
+        Edge{10, 20},
+        Edge{20, 50}
+    };
+
+    for (auto& edge: edges) {
+        graph.addEdge(edge);
+    }
+
+    std::list expected {0, 10, 20, 50, 40};
+    auto result {graph.getDepthFirstOrder(0)};
+    auto expectedElement {std::begin(expected)}; 
+    auto resultElement {std::begin(result)};
+
+    EXPECT_EQ(std::size(expected), std::size(result));
+    for (;resultElement != std::end(result) && expectedElement != std::end(expected); ++expectedElement, ++resultElement) {
+        EXPECT_EQ(*expectedElement, *resultElement);
+    }
 }

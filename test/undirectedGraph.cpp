@@ -219,3 +219,28 @@ TEST(GraphEdgeAttributeTest, AddEdgeAndSetAttribute) {
     ASSERT_EQ(graph.getEdgeAttribute(edge).label, graph.getEdgeAttribute(reverse).label);
     ASSERT_EQ(graph.getEdgeAttribute(edge).label, a1.label);
 }
+
+TEST(GraphTraversalTest, getUndirectedBFSOrder) {
+    Basis::Graph<Basis::GraphType::undirected, int, int> graph;
+    std::array edges {
+        Edge{0, 1},
+        Edge{1, 2},
+        Edge{2, 3},
+        Edge{3, 4},
+        Edge{4, 0}
+    };
+
+    for (auto& edge: edges) {
+        graph.addEdge(edge);
+    }
+
+    std::list expected {0, 1, 4, 2, 3};
+    auto result {graph.getBreadthFirstOrder(0)};
+    auto expectedElement {std::begin(expected)}; 
+    auto resultElement {std::begin(result)};
+
+    EXPECT_EQ(std::size(expected), std::size(result));
+    for (;resultElement != std::end(result) && expectedElement != std::end(expected); ++expectedElement, ++resultElement) {
+        EXPECT_EQ(*expectedElement, *resultElement);
+    }
+}

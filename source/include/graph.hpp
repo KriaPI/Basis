@@ -6,9 +6,10 @@
 #include <unordered_set>
 #include <utility>
 #include <format>
+#include <queue>
+#include <stack>
 
-// TODO: add static asserts or something to constrain certain argument inputs (compile time checks only). 
-// TODO: implement breadth-first search and depth-first search
+// TODO: de-duplicate bfs and dfs code
 // TODO: think about if custom iterators are a good idea to implement
 
 namespace Basis {
@@ -177,6 +178,92 @@ namespace Basis {
             const auto& edgeEnd {std::ranges::find(adjacencyList, edge.to, [] (const EdgeEnd& edgeEnd) {return edgeEnd.to;})};
             return edgeEnd->attribute;
         }
+
+        /// @brief Retrieve a const reference to the list containing neighboring vertices (along with their attributes). 
+        /// @param vertex A vertex within the graph.
+        /// @return The neighbors of `vertex`.
+        /// @throws `std::out_of_range` if `vertex` does not exist in the graph.
+        [[nodiscard]] const auto& getNeighbors(const VertexIndice vertex) {
+            if (!doesVertexExist(vertex)) {
+                throw std::out_of_range(std::format("No vertex with index {} exists.", vertex));
+            } else {
+                return edges[vertex];
+            }
+        }
+
+        /// @brief Get the order that vertices are discovered in a breadth-first search.
+        /// @param source Vertex to start search from. 
+        /// @return The order of a breadth-first search starting from `source`.
+        /// @throws `std::out_of_range` if `source` does not exist in the graph.
+        [[nodiscard]] const std::list<VertexIndice> getBreadthFirstOrder(VertexIndice source) {
+            if (!doesVertexExist(source)) {
+                throw std::out_of_range(std::format("No vertex with index {} exists.", source));
+            }
+
+            std::list<VertexIndice> discoveryOrder;
+            discoveryOrder.emplace_back(source);
+            std::unordered_set<VertexIndice> discovered {source}; 
+            std::queue<VertexIndice> toVisit;
+            toVisit.push(source);
+
+            while (!toVisit.empty()) {
+                auto current {toVisit.front()};
+                auto neighbors {getNeighbors(current)};
+                
+                if (!discovered.contains(current)) {
+                    discovered.insert(current);
+                    discoveryOrder.emplace_back(current);
+                }
+
+                for (EdgeEnd& neighborWithAttribute: neighbors) {
+                    auto neighbor {neighborWithAttribute.to};
+                    if (!discovered.contains(neighbor)) {
+                        toVisit.push(neighbor);
+                        
+                    }
+                }
+                toVisit.pop();
+            }
+
+            return discoveryOrder;
+        }
+
+        /// @brief Get the order that vertices are discovered in a depth-first search.
+        /// @param source Vertex to start search from. 
+        /// @return The order of a depth-first search starting from `source`.
+        /// @throws `std::out_of_range` if `source` does not exist in the graph.
+        [[nodiscard]] const std::list<VertexIndice> getDepthFirstOrder(VertexIndice source) {
+            if (!doesVertexExist(source)) {
+                throw std::out_of_range(std::format("No vertex with index {} exists.", source));
+            }
+
+            std::list<VertexIndice> discoveryOrder;
+            discoveryOrder.emplace_back(source);
+            std::unordered_set<VertexIndice> discovered {source}; 
+            std::stack<VertexIndice> toVisit;
+            toVisit.push(source);
+
+            while (!toVisit.empty()) {
+                auto current {toVisit.top()};
+                toVisit.pop();
+                auto neighbors {getNeighbors(current)};
+                
+                if (!discovered.contains(current)) {
+                    discovered.insert(current);
+                    discoveryOrder.emplace_back(current);
+                }
+
+                for (EdgeEnd& neighborWithAttribute: neighbors) {
+                    auto neighbor {neighborWithAttribute.to};
+                    if (!discovered.contains(neighbor)) {
+                        toVisit.push(neighbor);
+                    }
+                }
+            }
+
+            return discoveryOrder;
+        }
+
     };
 
     /// @brief A type generic graph class with edge and vertex attributes. 
