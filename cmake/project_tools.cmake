@@ -26,6 +26,6 @@ macro(project_enable_clang_tidy)
     find_program(PROJECT_CLANG_TIDY clang-tidy OPTIONAL)
 
     add_custom_target(check
-        COMMAND ${PROJECT_CLANG_TIDY} -p ${CMAKE_BINARY_DIR} ${PROJECT_FILES}
+        COMMAND ${PROJECT_CLANG_TIDY} -p ${CMAKE_BINARY_DIR} ${PROJECT_FILES} -header-filter=.*
     )
 endmacro()
