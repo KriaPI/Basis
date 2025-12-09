@@ -9,7 +9,6 @@
 #include <queue>
 #include <stack>
 
-// TODO: de-duplicate bfs and dfs code
 // TODO: think about if custom iterators are a good idea to implement
 
 namespace Basis {
@@ -37,15 +36,6 @@ namespace Basis {
 
     template <typename VertexAttribute = int, typename EdgeAttribute = char>
     class GraphBase {
-        private:
-        using EdgeEnd = EdgeEndWithAttribute<EdgeAttribute>;
-
-        std::size_t vertexCount {0};
-        std::size_t edgeCount {0};
-        std::unordered_set<VertexIndice> vertices;
-        std::unordered_map<VertexIndice, VertexAttribute> vertexAttributes;
-        std::unordered_map<VertexIndice, std::list<EdgeEnd>> edges;
-    
         public:
         /// @brief Add a vertex to a the graph.
         /// @param vertex The vertex to add. 
@@ -147,15 +137,14 @@ namespace Basis {
             return vertexAttributes.at(vertex);
         }
 
-        /// @brief Set or update the attribute value of an edge. 
+        /// @brief Set or update the attribute value of an edge. Does nothing if the edge does not exist.
         /// @param edge The edge whose attribute value should be set or updated.
         /// @param value Value to set or update to.
         /// @note Edge attribute values are already default-initialized.
-        /// @throws `std::out_of_range` if `edge` does not exist in the graph. 
         template <typename T>
-        void setEdgeAttribute(const Edge& edge, T&& value) {
+        void setEdgeAttribute(const Edge& edge, T&& value) noexcept {
             if (!doesEdgeExist(edge)) {
-                throw std::out_of_range(std::format("Edge ({}, {}) does not exist.", edge.from, edge.to));
+                return;
             }
             
             const auto adjacentVertices {edges.find(edge.from)};
@@ -200,29 +189,28 @@ namespace Basis {
                 throw std::out_of_range(std::format("No vertex with index {} exists.", source));
             }
 
-            std::list<VertexIndice> discoveryOrder;
-            discoveryOrder.emplace_back(source);
+            std::list<VertexIndice> discoveryOrder {source};
             std::unordered_set<VertexIndice> discovered {source}; 
             std::queue<VertexIndice> toVisit;
-            toVisit.push(source);
+            toVisit.emplace(source);
 
             while (!toVisit.empty()) {
                 auto current {toVisit.front()};
-                auto neighbors {getNeighbors(current)};
+                toVisit.pop();
+                const auto& neighbors {getNeighbors(current)};
                 
                 if (!discovered.contains(current)) {
                     discovered.insert(current);
                     discoveryOrder.emplace_back(current);
                 }
 
-                for (EdgeEnd& neighborWithAttribute: neighbors) {
+                for (const EdgeEnd& neighborWithAttribute: neighbors) {
                     auto neighbor {neighborWithAttribute.to};
                     if (!discovered.contains(neighbor)) {
-                        toVisit.push(neighbor);
+                        toVisit.emplace(neighbor);
                         
                     }
                 }
-                toVisit.pop();
             }
 
             return discoveryOrder;
@@ -237,26 +225,25 @@ namespace Basis {
                 throw std::out_of_range(std::format("No vertex with index {} exists.", source));
             }
 
-            std::list<VertexIndice> discoveryOrder;
-            discoveryOrder.emplace_back(source);
+            std::list<VertexIndice> discoveryOrder {source};
             std::unordered_set<VertexIndice> discovered {source}; 
             std::stack<VertexIndice> toVisit;
-            toVisit.push(source);
+            toVisit.emplace(source);
 
             while (!toVisit.empty()) {
                 auto current {toVisit.top()};
                 toVisit.pop();
-                auto neighbors {getNeighbors(current)};
+                const auto& neighbors {getNeighbors(current)};
                 
                 if (!discovered.contains(current)) {
                     discovered.insert(current);
                     discoveryOrder.emplace_back(current);
                 }
 
-                for (EdgeEnd& neighborWithAttribute: neighbors) {
+                for (const EdgeEnd& neighborWithAttribute: neighbors) {
                     auto neighbor {neighborWithAttribute.to};
                     if (!discovered.contains(neighbor)) {
-                        toVisit.push(neighbor);
+                        toVisit.emplace(neighbor);
                     }
                 }
             }
@@ -264,6 +251,14 @@ namespace Basis {
             return discoveryOrder;
         }
 
+        private:
+        using EdgeEnd = EdgeEndWithAttribute<EdgeAttribute>;
+
+        std::size_t vertexCount {0};
+        std::size_t edgeCount {0};
+        std::unordered_set<VertexIndice> vertices;
+        std::unordered_map<VertexIndice, VertexAttribute> vertexAttributes;
+        std::unordered_map<VertexIndice, std::list<EdgeEnd>> edges;
     };
 
     /// @brief A type generic graph class with edge and vertex attributes. 
@@ -334,7 +329,7 @@ namespace Basis {
         /// @throws `std::out_of_range` if `edge` does not exist in the graph. 
         template <typename T>
         void setEdgeAttribute(const Edge& edge, T&& value) {
-            GraphBase<VertexAttributes, EdgeAttributes>::setEdgeAttribute(edge, std::forward<T>(value));
+            GraphBase<VertexAttributes, EdgeAttributes>::setEdgeAttribute(edge, value);
             GraphBase<VertexAttributes, EdgeAttributes>::setEdgeAttribute(getEdgeReversal(edge), std::forward<T>(value));
         }
     };
